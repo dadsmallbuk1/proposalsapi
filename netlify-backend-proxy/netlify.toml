@@ -1,5 +1,9 @@
 # File: netlify.toml
 
 [build]
+  # This command forces Netlify's build system to run.
+  command = "echo 'Building from netlify.toml...'"
+  
   # This tells Netlify where your serverless functions are located.
   functions = "netlify/functions"
+
