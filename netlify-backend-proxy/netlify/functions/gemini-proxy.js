@@ -2,7 +2,7 @@
 
 exports.handler = async function(event, context) {
     // 1. Define the allowed origin. This makes your function more secure.
-    const allowedOrigin = '[https://proposals.onspirehealthmarketing.com](https://proposals.onspirehealthmarketing.com)';
+    const allowedOrigin = 'https://proposals.onspirehealthmarketing.com';
 
     const headers = {
         'Access-Control-Allow-Origin': allowedOrigin,
@@ -61,4 +61,5 @@ exports.handler = async function(event, context) {
         console.error('Error in serverless function:', error);
         return { statusCode: 500, headers: headers, body: JSON.stringify({ error: error.message }) };
     }
+
 };
