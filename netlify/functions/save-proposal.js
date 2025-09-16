@@ -1,37 +1,38 @@
 const admin = require('firebase-admin');
 
-// Log environment variables to check if they exist at the start
-console.log('Function Loaded: save-proposal');
-console.log('FIREBASE_PROJECT_ID:', process.env.FIREBASE_PROJECT_ID ? 'Exists' : 'MISSING!');
-console.log('FIREBASE_SERVICE_ACCOUNT_BASE64:', process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 ? 'Exists' : 'MISSING!');
+// Function to initialize Firebase Admin SDK
+function initializeFirebaseAdmin() {
+    // Check if the app is already initialized to prevent errors
+    if (admin.apps.length === 0) {
+        try {
+            // Get credentials from environment variables
+            const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+            const projectId = process.env.FIREBASE_PROJECT_ID;
 
-let db;
+            if (!serviceAccountBase64 || !projectId) {
+                throw new Error('Firebase credentials are not set in the environment variables.');
+            }
 
-// Initialize Firebase Admin SDK
-try {
-    if (!admin.apps.length) {
-        const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
-        if (!serviceAccountBase64) {
-            throw new Error('Firebase service account key NOT FOUND in environment variables.');
+            // Decode the Base64 service account key
+            const serviceAccountJson = Buffer.from(serviceAccountBase64, 'base64').toString('utf8');
+            const serviceAccount = JSON.parse(serviceAccountJson);
+
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+                projectId: projectId,
+            });
+        } catch (error) {
+            console.error('Firebase Admin SDK initialization error:', error);
+            // Re-throw the error to be caught by the handler
+            throw new Error(`Firebase initialization failed: ${error.message}`);
         }
-        const serviceAccountJson = Buffer.from(serviceAccountBase64, 'base64').toString('utf8');
-        const serviceAccount = JSON.parse(serviceAccountJson);
-
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-            databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`
-        });
-        console.log('Firebase Admin Initialized Successfully for save-proposal.');
     }
-    db = admin.firestore();
-} catch (error) {
-    console.error("CRITICAL: Firebase Admin initialization failed:", error);
+    return admin.firestore();
 }
 
 exports.handler = async function(event, context) {
-    const allowedOrigin = '[https://proposals.onspirehealthmarketing.com](https://proposals.onspirehealthmarketing.com)';
     const headers = {
-        'Access-Control-Allow-Origin': allowedOrigin,
+        'Access-Control-Allow-Origin': 'https://proposals.onspirehealthmarketing.com',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
     };
@@ -39,23 +40,20 @@ exports.handler = async function(event, context) {
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 204, headers, body: '' };
     }
-
-    // If Firebase failed to initialize, return a clear server error.
-    if (!db) {
-        console.error("Firestore database is not available. Initialization likely failed.");
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Server configuration error: Could not connect to the database.' })
-        };
-    }
-
+    
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: 'Method Not Allowed' };
+        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
     }
 
     try {
+        const db = initializeFirebaseAdmin();
         const data = JSON.parse(event.body);
+
+        // Simple validation to ensure we're not saving empty data
+        if (!data || !data.clientName) {
+            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Client name is required.' }) };
+        }
+        
         const docRef = await db.collection('proposals').add(data);
         
         return {
@@ -64,12 +62,8 @@ exports.handler = async function(event, context) {
             body: JSON.stringify({ id: docRef.id }),
         };
     } catch (error) {
-        console.error('Error saving to Firestore:', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Failed to save proposal data.' }),
-        };
+        console.error('Error in save-proposal function:', error);
+        return { statusCode: 500, headers, body: JSON.stringify({ error: `Internal Server Error: ${error.message}` }) };
     }
 };
 
