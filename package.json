@@ -1,11 +1,9 @@
 {
-  "name": "proposals-api-proxy",
+  "name": "proposal-api-functions",
   "version": "1.0.0",
-  "description": "Netlify function proxy for Gemini API.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC"
+  "description": "Serverless functions for the Onspire proposal tool.",
+  "dependencies": {
+    "firebase-admin": "^12.1.1"
+  }
 }
+
