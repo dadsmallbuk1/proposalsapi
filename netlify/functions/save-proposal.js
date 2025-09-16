@@ -1,19 +1,21 @@
 const admin = require('firebase-admin');
 
-// Initialize Firebase Admin SDK
-try {
-  const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
-  if (!serviceAccountBase64) {
-    throw new Error('Firebase service account key not found in environment variables.');
-  }
-  const serviceAccount = JSON.parse(Buffer.from(serviceAccountBase64, 'base64').toString('utf8'));
+// A guard to prevent initializing the app more than once.
+if (!admin.apps.length) {
+  try {
+    const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+    if (!serviceAccountBase64) {
+      throw new Error('Firebase service account key not found in environment variables.');
+    }
+    const serviceAccount = JSON.parse(Buffer.from(serviceAccountBase64, 'base64').toString('utf8'));
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`
-  });
-} catch (error) {
-  console.error("Firebase Admin initialization error:", error);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`
+    });
+  } catch (error) {
+    console.error("Firebase Admin initialization error:", error);
+  }
 }
 
 const db = admin.firestore();
@@ -52,3 +54,4 @@ exports.handler = async function(event, context) {
     };
   }
 };
+
