@@ -27,7 +27,7 @@ exports.handler = async function(event, context) {
     // 4. Get the secret API key from Netlify's environment variables
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     if (!GEMINI_API_KEY) {
-        return { statusCode: 500, headers: headers, body: 'API key not found.' };
+        return { statusCode: 500, headers: headers, body: JSON.stringify({error: 'API key not found.'}) };
     }
 
     // 5. The URL for the Gemini API
@@ -62,3 +62,4 @@ exports.handler = async function(event, context) {
         return { statusCode: 500, headers: headers, body: JSON.stringify({ error: error.message }) };
     }
 };
+
