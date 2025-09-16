@@ -1,9 +1,11 @@
 {
-  "name": "proposal-api-functions",
+  "name": "proposals-api",
   "version": "1.0.0",
-  "description": "Serverless functions for the Onspire proposal tool.",
-  "dependencies": {
-    "firebase-admin": "^12.1.1"
-  }
+  "description": "Serverless functions for proposal tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
 }
-
